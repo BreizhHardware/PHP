@@ -62,15 +62,7 @@
         if(isset($_POST['auteur']) && isset($_POST['siecle'])){
             $author = $_POST['auteur'];
             $century = $_POST['siecle'];
-            $quotes = getAuthorAndSiecle($db, $author, $century);
-            if($quotes != null){
-                foreach ($quotes as $quote) {
-                    echo "<p>" . $quote['phrase'] . "</p>";
-                }
-            }
-            else{
-                echo "<p>Aucune citation trouvée</p>";
-            }
+            displayQuoteByAuthorAndCentury($db, $author, $century);
         }
     ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
