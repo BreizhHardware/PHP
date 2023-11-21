@@ -57,6 +57,7 @@
         $siecleid = $result['siecleid'];
         $statement = $db->query("SELECT nom, prenom FROM auteur WHERE id = $auteurid");
         $result = $statement->fetch(PDO::FETCH_ASSOC);
+        console_log($result);
         $nom = $result['nom'];
         $prenom = $result['prenom'];
         $statement = $db->query("SELECT numero FROM siecle WHERE id = $siecleid");
@@ -66,47 +67,146 @@
         echo "<p> $prenom $nom ($numero<sup>e</sup> siècle)</p>";
     }
 
-    function getAuthorAndSiecle(PDO $db, $author, $siecle){
-        // Requête préparée pour récupérer l'id de l'auteur
-        $statement = $db->prepare("SELECT id FROM auteur WHERE nom = :author");
-        $statement->bindParam(':author', $author);
+    function console_log($message, $with_script_tags = true){
+        $js_code = 'console.log(' . json_encode($message, JSON_HEX_TAG) .
+            ');';
+        if ($with_script_tags) {
+            $js_code = '<script>' . $js_code . '</script>';
+        }
+        echo $js_code;
+    }
+
+    function getAuthorIdByName(PDO $db, $name){
+        $statement = $db->prepare("SELECT id FROM auteur WHERE CONCAT(nom, ' ', prenom) = :name");
+        $statement->bindParam(':name', $name);
         $statement->execute();
         $result = $statement->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['id'] : null;
+    }
 
-        // Vérifier si la requête a retourné des résultats
-        if ($result !== false) {
-            $auteurid = $result['id'];
+    function getCenturyIdByNumber(PDO $db, $number){
+        $statement = $db->prepare("SELECT id FROM siecle WHERE numero = :number");
+        $statement->bindParam(':number', $number);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['id'] : null;
+    }
 
-            // Requête préparée pour récupérer l'id du siècle
-            $statement = $db->prepare("SELECT id FROM siecle WHERE numero = :siecle");
-            $statement->bindParam(':siecle', $siecle);
+    function getQuoteByAuthorAndCentury($db, $author, $century){
+        try{
+            $authorId = getAuthorIdByName($db, $author);
+
+            $centuryId = getCenturyIdByNumber($db, $century);
+
+            $statement = $db->prepare("SELECT phrase FROM citation WHERE auteurid = :authorId AND siecleid = :centuryId");
+            $statement->bindParam(':authorId', $authorId);
+            $statement->bindParam(':centuryId', $centuryId);
             $statement->execute();
-            $result = $statement->fetch(PDO::FETCH_ASSOC);
+            $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-            // Vérifier si la requête a retourné des résultats
-            if ($result !== false) {
-                $siecleid = $result['id'];
-
-                // Requête préparée pour récupérer la phrase
-                $statement = $db->prepare("SELECT phrase FROM citation WHERE auteurid = :authorid AND siecleid = :siecleid");
-                $statement->bindParam(':authorid', $auteurid);
-                $statement->bindParam(':siecleid', $siecleid);
-                $statement->execute();
-                $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-                // Vérifier si la requête a retourné des résultats
-                if ($result !== false) {
-                    $phrase = $result['phrase'];
-                    echo "<p><strong> $phrase </strong></p>";
-                    echo "<p> $author ($siecle<sup>e</sup> siècle)</p>";
-                } else {
-                    echo "<p>Aucune phrase trouvée pour cet auteur et ce siècle.</p>";
-                }
-            } else {
-                echo "<p>Aucun siècle trouvé pour le numéro spécifié.</p>";
+            if($result){
+                return $result;
             }
-        } else {
-            echo "<p>Aucun auteur trouvé pour le nom spécifié.</p>";
+            else{
+                return null;
+            }
+        }
+        catch (PDOException $exception){
+            error_log('Request error: '.$exception->getMessage());
+            return false;
+        }
+    }
+
+    function displayQuoteByAuthorAndCentury(PDO $db, $author, $century){
+        $quotes = getQuoteByAuthorAndCentury($db, $author, $century);
+        if($quotes != null){
+            echo "<table>";
+            echo "<thead><tr><th>Citation</th></tr></thead>";
+            echo "<tbody>";
+            foreach ($quotes as $quote) {
+                echo "<tr><td>" . $quote['phrase'] . "</td></tr>";
+            }
+            echo "</tbody>";
+            echo "</table>";
+        }
+        else{
+            echo "<p>Aucune citation trouvée</p>";
+        }
+    }
+
+    function dbGetQuotesID(PDO $db){
+        $pgsql = "SELECT id FROM citation";
+        $stmt = $db->prepare($pgsql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
+
+    function addQuotesToDb(PDO $db, $authorName, $authorFirstName, $century, $quote){
+        try {
+            $db->beginTransaction();
+
+            // Check if the author already exists; if not, add it to the database
+            $authorId = getAuthorIdByName($db, $authorName . " " . $authorFirstName);
+            if($authorId == null){
+                $insertAuthorStatement = $db->prepare("INSERT INTO auteur (nom, prenom) VALUES (:nom, :prenom)");
+                $insertAuthorStatement->bindParam(':nom', $authorName);
+                $insertAuthorStatement->bindParam(':prenom', $authorFirstName);
+                $insertAuthorStatement->execute();
+                $authorId = getAuthorIdByName($db, $authorName . " " . $authorFirstName);
+            }
+
+            // Check if the century already exists; if not, add it to the database
+            $centuryId = getCenturyIdByNumber($db, $century);
+            if($centuryId == null){
+                $insertCenturyStatement = $db->prepare("INSERT INTO siecle (numero) VALUES (:numero)");
+                $insertCenturyStatement->bindParam(':numero', $century);
+                $insertCenturyStatement->execute();
+                $centuryId = getCenturyIdByNumber($db, $century);
+            }
+
+            // Add the quote to the database
+            $insertQuoteStatement = $db->prepare("INSERT INTO citation (phrase, auteurid, siecleid) VALUES (:phrase, :auteurid, :siecleid)");
+            $insertQuoteStatement->bindParam(':phrase', $quote);
+            $insertQuoteStatement->bindParam(':auteurid', $authorId);
+            $insertQuoteStatement->bindParam(':siecleid', $centuryId);
+            $insertQuoteStatement->execute();
+
+            // Commit the transaction
+            $db->commit();
+        } catch (Exception $e) {
+            // Roll back the transaction if an exception occurs
+            $db->rollBack();
+            echo "Failed: " . $e->getMessage();
+        }
+    }
+
+    function deleteQuoteFromDb(PDO $db, $id){
+        try {
+            $db->beginTransaction();
+
+            // Delete the quote from the database
+            $deleteQuoteStatement = $db->prepare("DELETE FROM citation WHERE id = :id");
+            $deleteQuoteStatement->bindParam(':id', $id);
+            $deleteQuoteStatement->execute();
+
+            // Commit the transaction
+            $db->commit();
+        } catch (Exception $e) {
+            // Roll back the transaction if an exception occurs
+            $db->rollBack();
+            echo "Failed: " . $e->getMessage();
+        }
+    }
+
+    function checkIfFormIsSubmit($db){
+        // Check if the form is submitted and the get is not empty
+        if(isset($_GET['AuthorName']) && isset($_GET['AuthorFirstName']) && isset($_GET['Century']) && isset($_GET['Quote'])){
+            // Check if the fields are not empty
+            if(!empty($_GET['AuthorName']) && !empty($_GET['AuthorFirstName']) && !empty($_GET['Century']) && !empty($_GET['Quote'])){
+                // Add the quote to the database
+                addQuotesToDb($db, $_GET['AuthorName'], $_GET['AuthorFirstName'], $_GET['Century'], $_GET['Quote']);
+            }
         }
     }
 ?>
