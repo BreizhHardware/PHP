@@ -24,28 +24,30 @@
             </div>
         </div>
     </nav>
-    <h1> La citation du jour </h1>
-    <hr>
-    <?php
-    require_once('database.php');
-    // Enable all warnings and errors.
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL);
-
-    // Database connection.
-    $db = dbConnect();
-    ?>
-    <p> Il y'a
+    <div class="m-3">
+        <h1> La citation du jour </h1>
+        <hr>
         <?php
-        // Number of Quotes
-        $nbQuotes = getNumberofQuotes($db);
-        echo "<b> $nbQuotes </b>";
+        require_once('database.php');
+        // Enable all warnings and errors.
+        ini_set('display_errors', 1);
+        error_reporting(E_ALL);
+
+        // Database connection.
+        $db = dbConnect();
         ?>
-        citations répértoriées </p>
-    <p> Et voici l'une d'entre elle générée aléatoirement: </p>
-    <?php
-        randomQuote($db);
-    ?>
+        <p> Il y'a
+            <?php
+            // Number of Quotes
+            $nbQuotes = getNumberofQuotes($db);
+            echo "<b> $nbQuotes </b>";
+            ?>
+            citations répértoriées </p>
+        <p> Et voici l'une d'entre elle générée aléatoirement: </p>
+        <?php
+            randomQuote($db);
+        ?>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>
