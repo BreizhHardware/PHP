@@ -1,0 +1,117 @@
+#DoctISEN{
+    font-family: 'Just Me Again Down Here', cursive;
+    color: white;
+    font-size: 36px
+}
+
+#topbar{
+    background-color: #ff0000;
+    height: 6vh;
+    width: 100%;
+}
+
+#acceuil{
+    background-color: #ff0000;
+    height: 50vh;
+}
+
+.text-red-700{
+    color: #842029;
+}
+
+#rdv{
+    position: fixed;
+    top: 15%;
+    left: 15%;
+}
+
+#img_index{
+    max-width: 100%;
+    max-height: 100%;
+    position: fixed;
+    right: 0;
+    top: 6vh;
+}
+
+#cardPos{
+    position: fixed;
+    top: 48vh;
+}
+
+.loginPrimaryCard{
+    position: fixed;
+    top: 15%;
+    left: 30%;
+    width: 40%;
+    height: 70%;
+}
+
+.loginSecondaryCard{
+    position: fixed;
+    top: 45%;
+    left: 30%;
+    width: 40%;
+    height: 70%;
+}
+
+.loginInsideCard{
+    padding-left: 15%;
+    padding-right: 15%;
+    padding-top: 5%;
+}
+
+.logButton{
+    width: 30%;
+    height: 100%;
+    background-color: #ff0000;
+    color: white;
+    font-weight: bold;
+}
+
+.pointer{
+    cursor: pointer;
+}
+
+.signInSecondaryCard{
+    left: 30%;
+    width: 40%;
+}
+
+.SignInPrimaryCard{
+    left: 30%;
+    width: 40%;
+}
+
+#searchbar{
+    background-color: #ff0000;
+}
+
+.gap-6 {
+    gap: 22rem !important;
+}
+
+.ms-6{
+margin-left: 6rem !important;
+}
+
+.mx-6{
+    margin-left: 24rem !important;
+    margin-right: 24rem !important;
+}
+
+.thumbnail{
+    max-width: 100%;
+    height: auto;
+}
+
+.cardImg{
+    width: 17%;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: underline;
+}
